@@ -175,19 +175,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ table, restaurantId, onClos
         }
 
         try {
-            await addBooking(restaurantId, {
-                tableId: table.id,
-                guestName: guestName || (isAdmin ? "Гость (Walk-in)" : ""),
-                guestPhone,
-                guestEmail,
-                guestCount,
-                dateTime,
-                timezoneOffset: dateTime.getTimezoneOffset(),
-                isAdmin
-            });
-
-            alert(isAdmin ? 'Столик успешно занят!' : 'Ваш запрос на бронирование отправлен!');
-            onClose();
+            if (isAdmin) {
+                await addBooking(restaurantId, {
+                    tableId: table.id,
+                    guestName: guestName || "Гость (Walk-in)",
+                    guestPhone,
+                    guestEmail,
+                    guestCount,
+                    dateTime,
+                    timezoneOffset: dateTime.getTimezoneOffset(),
+                    isAdmin
+                });
+                alert('Столик успешно занят!');
+                onClose();
+            } else {
+                const message = `Здравствуйте! Мне нужно забронировать столик номер ${table.label} на ${bookingDate} в ${bookingTime}. Меня зовут ${guestName}, количество гостей ${guestCount}.`;
+                window.location.href = `https://api.whatsapp.com/send?phone=14155238886&text=${encodeURIComponent(message)}`;
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Не удалось создать бронирование.');
         }

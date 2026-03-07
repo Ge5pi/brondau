@@ -37,75 +37,7 @@ const calculateBounds = (elements: LayoutElement[]) => {
     };
 };
 
-const CountdownTimer: React.FC<{ createdAt: Date }> = ({ createdAt }) => {
-    const [timeLeft, setTimeLeft] = useState(3600);
 
-    useEffect(() => {
-        const updateTimer = () => {
-            const elapsed = (new Date().getTime() - createdAt.getTime()) / 1000;
-            const remaining = 3600 - elapsed;
-            setTimeLeft(Math.max(0, remaining));
-        };
-        updateTimer();
-        const intervalId = setInterval(updateTimer, 1000);
-        return () => clearInterval(intervalId);
-    }, [createdAt]);
-
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = Math.floor(timeLeft % 60);
-    const timeColor = timeLeft < 60 ? 'text-brand-red' : 'text-brand-yellow';
-
-    return <span className={`font-mono font-bold ${timeColor}`}>{minutes}:{seconds.toString().padStart(2, '0')}</span>;
-};
-
-const BookingRequestCard: React.FC<{ booking: Booking; restaurantId: string }> = ({ booking, restaurantId }) => {
-    const { updateBookingStatus } = useData();
-    const [reason, setReason] = useState('');
-    const [isDeclining, setIsDeclining] = useState(false);
-
-    const handleDecline = () => {
-        if (!reason.trim()) {
-            alert("Пожалуйста, укажите причину отклонения.");
-            return;
-        }
-        updateBookingStatus(restaurantId, booking.id, BookingStatus.DECLINED, reason);
-    };
-
-    return (
-        <div className="bg-brand-accent p-4 rounded-lg shadow-md transition-transform hover:scale-105">
-            <div className="flex justify-between items-center flex-wrap gap-2">
-                <h4 className="font-bold text-lg">Столик {booking.tableLabel}</h4>
-                <div className="text-sm">
-                    Осталось: <CountdownTimer createdAt={booking.createdAt} />
-                </div>
-            </div>
-            <p className="text-sm" style={{ color: '#f5efe6' }}>{booking.guestName} ({booking.guestCount} гостей)</p>
-            <p className="text-sm font-medium" style={{ color: '#e6d5c0' }}>{booking.guestPhone}</p>
-            <p className="text-sm text-gray-400">{booking.dateTime.toLocaleString('ru-RU')}</p>
-
-            {isDeclining ? (
-                <div className="mt-4 space-y-2">
-                    <input
-                        type="text"
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        placeholder="Причина отказа"
-                        className="w-full bg-brand-primary p-2 rounded-md border border-gray-600 text-sm"
-                    />
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                        <button onClick={handleDecline} className="flex-1 bg-brand-red text-white px-3 py-2 text-sm rounded-md hover:bg-red-700">Подтвердить</button>
-                        <button onClick={() => setIsDeclining(false)} className="bg-gray-500 text-white px-3 py-2 text-sm rounded-md hover:bg-gray-600">Отмена</button>
-                    </div>
-                </div>
-            ) : (
-                <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                    <button onClick={() => updateBookingStatus(restaurantId, booking.id, BookingStatus.CONFIRMED)} className="flex-1 bg-brand-green text-white px-3 py-2 text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">Подтвердить</button>
-                    <button onClick={() => setIsDeclining(true)} className="flex-1 bg-brand-red text-white px-3 py-2 text-sm font-semibold rounded-md hover:bg-red-700 transition-colors">Отклонить</button>
-                </div>
-            )}
-        </div>
-    );
-};
 
 const AdminView: React.FC = () => {
     const { selectedRestaurantId } = useApp();
@@ -136,12 +68,7 @@ const AdminView: React.FC = () => {
         }
     }, [selectedRestaurantId]);
 
-    const pendingBookings = useMemo(() => {
-        if (!restaurant) return [];
-        return restaurant.bookings
-            .filter(b => b.status === BookingStatus.PENDING)
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    }, [restaurant]);
+
 
     const occupiedTableBookings = useMemo(() => {
         if (!restaurant) return [];
@@ -187,21 +114,8 @@ const AdminView: React.FC = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Column 1: Requests */}
-            <div className="lg:col-span-1 order-2 lg:order-1">
-                <h2 className="text-xl md:text-2xl font-bold mb-4" style={{ color: '#2c1f14' }}>Новые запросы</h2>
-                <div className="space-y-4 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto pr-2">
-                    {pendingBookings.length > 0 ? (
-                        pendingBookings.map(b => <BookingRequestCard key={b.id} booking={b} restaurantId={restaurant.id} />)
-                    ) : (
-                        <p className="text-gray-400 text-center py-8">Нет ожидающих запросов.</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Column 2 & 3: Map and Lists */}
-            <div className="lg:col-span-2 space-y-6 order-1 lg:order-2">
+        <div className="grid grid-cols-1 gap-8">
+            <div className="space-y-6">
 
                 {/* Status Sections (Collapsible on mobile could be nice, but stacked is fine) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
